@@ -1,0 +1,58 @@
+#include <msp430.h>
+
+int main(void)
+{
+ WDTCTL = WDTPW + WDTHOLD;                 // Stop WDT
+ P1DIR |= 0x08;                            // P1.3 output
+ P1OUT &= ~0x08;                           // LED off
+ TA0CCTL0 = CCIE;                          // CCR0 interrupt enabled
+ TA0CCR0 = 250;
+ TA0CTL = TASSEL_2 + MC_1 + TACLR;         // SMCLK, upmode, clear TAR
+ __bis_SR_register(LPM0_bits + GIE);       // Enter LPM0 w/ interrupt
+}
+
+// Timer A0 interrupt service routine
+#pragma vector=TIMER0_A0_VECTOR
+__interrupt void Timer_A (void)
+{
+   P1OUT ^= 0x08;                          // Toggle P1.3
+}
+
+PWM Code:
+
+#include <msp430.h>
+
+void main(void)
+{
+ WDTCTL = WDTPW + WDTHOLD;                 // Stop WDT
+ P1DIR |= BIT2;                            // P1.2 output
+ P1SEL |= BIT2;                            // P1.2 options select
+ TA0CCR0 = 500-1;                          // PWM Period
+ TA0CCTL1 = OUTMOD_7;                      // CCR1 reset/set
+ TA0CCR1 = 400;                            // CCR1 PWM duty cycle
+ TA0CTL = TASSEL_2 + MC_1 + TACLR;         // SMCLK, up mode, clear TAR
+
+ __bis_SR_register(LPM0_bits + GIE);       // Enter LPM0
+}
+
+UML Diagram:
+
+-main()
+-WDTCTL = WDTPW + WDTHOLD;
+-P1DIR |= 0x08;
+-P1OUT &= ~0x08;
+-TA0CCTL0 = CCIE;
+-TA0CCR0 = 250;
+-TA0CTL = TASSEL_2 + MC_1 + TACLR;
+-__bis_SR_register(LPM0_bits + GIE);
+-Timer_A()
+-P1OUT ^= 0x08;
+-main()
+-WDTCTL = WDTPW + WDTHOLD;
+-P1DIR |= BIT2;
+-P1SEL |= BIT2;
+-TA0CCR0 = 500-1;
+-TA0CCTL1 = OUTMOD_7;
+-TA0CCR1 = 400;
+-TA0CTL = TASSEL_2 + MC_1 + TACLR;
+-__bis_SR_register(LPM0_bits + GIE);
